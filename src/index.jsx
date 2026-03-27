@@ -160,6 +160,12 @@ const GlobalStyles = () => (
     .stagger-4 { animation-delay: 0.2s; }
     .stagger-5 { animation-delay: 0.25s; }
     .stagger-6 { animation-delay: 0.3s; }
+
+    @media (max-width: 480px) {
+      .header-site-title { display: none; }
+      .header-nav { gap: 20px !important; }
+      .header-nav a { letter-spacing: 0.5px !important; }
+    }
   `}</style>
 );
 
@@ -186,12 +192,12 @@ function Header() {
             fontSize: 18, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700,
             color: BG_PRIMARY, letterSpacing: -1,
           }}>C</div>
-          <span style={{
+          <span className="header-site-title" style={{
             fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600,
             color: GOLD_LIGHT, letterSpacing: 2, textTransform: "uppercase",
           }}>{SITE_TITLE}</span>
         </Link>
-        <nav style={{ display: "flex", gap: 32, alignItems: "center" }}>
+        <nav className="header-nav" style={{ display: "flex", gap: 32, alignItems: "center" }}>
           {[
             { label: "Ceremonies", to: "#/ceremonies/2026" },
             { label: "People", to: "#/people" },
