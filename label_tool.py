@@ -394,6 +394,8 @@ input.addEventListener('keydown', (e) => {
       go(1);
     } else if (acIndex >= 0 && items.length > 0) {
       addLabel(items[acIndex].dataset.name);
+    } else if (ghost.textContent) {
+      addLabel(ghost.textContent);
     } else {
       addLabel(input.value);
     }
