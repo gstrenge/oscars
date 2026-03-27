@@ -1122,11 +1122,23 @@ function CeremonyPage({ year }) {
                 }}>
                   {award.title}
                 </div>
-                {award.winners.map((w) => (
-                  <div key={w} style={{ fontSize: 18, fontWeight: 400, color: TEXT_PRIMARY, lineHeight: 1.4 }}>
-                    {w}
-                  </div>
-                ))}
+                {award.winners.map((w) => {
+                  const attendee = ceremony.attendees.find((a) => a.name === w);
+                  return (
+                    <div key={w} style={{ lineHeight: 1.4 }}>
+                      {attendee ? (
+                        <Link to={`#/people/${attendee.slug}`} style={{ fontSize: 18, fontWeight: 400, color: TEXT_PRIMARY }}>
+                          {w}
+                          {attendee.character && (
+                            <span style={{ fontSize: 13, color: TEXT_DIM, fontWeight: 300 }}> as {attendee.character}</span>
+                          )}
+                        </Link>
+                      ) : (
+                        <span style={{ fontSize: 18, fontWeight: 400, color: TEXT_PRIMARY }}>{w}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
