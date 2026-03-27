@@ -390,7 +390,9 @@ input.addEventListener('keydown', (e) => {
 
   if (e.key === 'Enter') {
     e.preventDefault();
-    if (acIndex >= 0 && items.length > 0) {
+    if (input.value.trim() === '' && acIndex < 0) {
+      go(1);
+    } else if (acIndex >= 0 && items.length > 0) {
       addLabel(items[acIndex].dataset.name);
     } else {
       addLabel(input.value);
