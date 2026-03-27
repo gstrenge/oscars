@@ -548,9 +548,113 @@ function PhotoGallery({ images, year }) {
 }
 
 // ─── LIGHTBOX WITH WATERMARK ────────────────────────────────────────────────
+const WATERMARK_OPTIONS = [
+  { id: "calis-oscars", label: "Cali's Oscars" },
+  { id: "getty",        label: "Getty Images" },
+  { id: "tmz",          label: "TMZ" },
+  { id: "none",         label: "No Watermark" },
+];
+
+function photographerFromFilename(filename) {
+  // "20260315_182256_Garrit_Strenge_1.webp" -> "Garrit Strenge"
+  const base = filename.replace(/\.[^.]+$/, "");
+  const parts = base.split("_");
+  // First two parts are date + time; trailing pure-number parts are duplicates
+  const nameParts = parts.slice(2).filter((p, i, arr) =>
+    !(i === arr.length - 1 && /^\d+$/.test(p))
+  );
+  return nameParts.join(" ");
+}
+
+async function drawWatermark(ctx, imgEl, type, photographer, year) {
+  if (type === "none") return;
+  const w = imgEl.width, h = imgEl.height;
+
+  if (type === "calis-oscars") {
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(-0.3);
+    ctx.font = `bold ${Math.max(w / 12, 36)}px serif`;
+    ctx.fillText(SITE_TITLE, 0, 0);
+    ctx.font = `${Math.max(w / 30, 14)}px sans-serif`;
+    ctx.fillText("© " + year, 0, Math.max(w / 12, 36) * 0.9);
+    ctx.restore();
+  } else if (type === "getty") {
+    // Font stack approximating Trade Gothic Bold No.2 / Light
+    const TRADE_GOTHIC = `'Trade Gothic', 'Trade Gothic LT Std', 'Franklin Gothic Medium', 'Arial Narrow', sans-serif`;
+    const fs = Math.max(w * 0.042, 28);   // "getty images" font size
+    const fsCredit = Math.max(w * 0.026, 18); // "Credit:" font size
+    const pad = fs * 0.65;
+
+    // Measure both halves of "getty images" to size the rect
+    ctx.save();
+    ctx.textBaseline = "alphabetic";
+    ctx.font = `bold ${fs}px ${TRADE_GOTHIC}`;
+    const gettyW = ctx.measureText("getty ").width;
+    ctx.font = `300 ${fs}px ${TRADE_GOTHIC}`;
+    const imagesW = ctx.measureText("images").width;
+    ctx.font = `bold ${fsCredit}px ${TRADE_GOTHIC}`;
+    const creditW = ctx.measureText(`Credit: ${photographer}`).width;
+
+    const textW = Math.max(gettyW + imagesW, creditW);
+    const rectW = textW + pad * 2;
+    const lineGap = fs * 0.90;
+    const rectH = pad * 2 + fs + lineGap + fsCredit * 0.3;
+
+    // Rectangle anchored to right edge, vertically centered
+    const rectX = w - rectW;
+    const rectY = (h - rectH) / 2;
+
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = "#666666";
+    ctx.fillRect(rectX, rectY, rectW, rectH);
+
+    // Text
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#ffffff";
+    const textX = rectX + pad;
+    const line1Y = rectY + pad + fs;
+
+    // "getty " — bold
+    ctx.font = `bold ${fs}px ${TRADE_GOTHIC}`;
+    ctx.fillText("getty", textX, line1Y);
+    // "images" — light
+    ctx.font = `300 ${fs}px ${TRADE_GOTHIC}`;
+    ctx.fillText("images", textX + gettyW, line1Y);
+
+    // "Credit: Photographer" — bold, smaller
+    ctx.font = `${fsCredit}px ${TRADE_GOTHIC}`;
+    ctx.fillText(`Credit: ${photographer}`, textX, line1Y + lineGap);
+
+    ctx.restore();
+  } else if (type === "tmz") {
+    await new Promise((resolve) => {
+      const logo = new Image();
+      logo.onload = () => {
+        const margin = Math.max(w * 0.025, 12);
+        const logoH = h * 0.1;
+        const logoW = logo.width * (logoH / logo.height);
+        ctx.save();
+        ctx.globalAlpha = 0.92;
+        ctx.drawImage(logo, margin, h - margin - logoH, logoW, logoH);
+        ctx.restore();
+        resolve();
+      };
+      logo.onerror = resolve; // don't block if SVG fails to load
+      logo.src = `${import.meta.env.BASE_URL}watermarks/tmz.svg`;
+    });
+  }
+}
+
 function Lightbox({ images, currentIndex, onClose, onNavigate }) {
   const canvasRef = useRef(null);
+  const imgRef = useRef(null);
   const current = images[currentIndex];
+  const [watermark, setWatermark] = useState("calis-oscars");
 
   useEffect(() => {
     const handler = (e) => {
@@ -562,32 +666,22 @@ function Lightbox({ images, currentIndex, onClose, onNavigate }) {
     return () => window.removeEventListener("keydown", handler);
   }, [currentIndex, images.length]);
 
-  // Render watermarked preview on canvas
+  // Redraw canvas whenever image or watermark changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.onload = () => {
+    img.onload = async () => {
+      imgRef.current = img;
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
-      // Watermark
-      ctx.save();
-      ctx.globalAlpha = 0.15;
-      ctx.font = `bold ${Math.max(img.width / 12, 36)}px 'Cormorant Garamond', serif`;
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "center";
-      ctx.translate(img.width / 2, img.height / 2);
-      ctx.rotate(-0.3);
-      ctx.fillText(`${SITE_TITLE}`, 0, 0);
-      ctx.font = `${Math.max(img.width / 30, 14)}px 'Outfit', sans-serif`;
-      ctx.fillText("© " + (current.year || ""), 0, img.width / 12);
-      ctx.restore();
+      await drawWatermark(ctx, img, watermark, photographerFromFilename(current.filename), current.year);
     };
     img.src = getImageUrl(current.filename, "full");
-  }, [current]);
+  }, [current, watermark]);
 
   return (
     <div
@@ -642,16 +736,40 @@ function Lightbox({ images, currentIndex, onClose, onNavigate }) {
         </button>
       )}
 
-      {/* Canvas with watermark */}
+      {/* Canvas + controls */}
       <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: "85vw", maxHeight: "80vh", position: "relative" }}>
         <canvas
           ref={canvasRef}
-          style={{ maxWidth: "85vw", maxHeight: "75vh", borderRadius: 4, display: "block" }}
+          style={{ maxWidth: "85vw", maxHeight: "72vh", borderRadius: 4, display: "block" }}
         />
+
+        {/* Watermark selector */}
+        <div style={{
+          display: "flex", gap: 6, justifyContent: "center",
+          padding: "10px 0 4px",
+        }}>
+          {WATERMARK_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setWatermark(opt.id)}
+              style={{
+                padding: "4px 12px", borderRadius: 100, fontSize: 11,
+                border: `1px solid ${watermark === opt.id ? GOLD : BORDER}`,
+                background: watermark === opt.id ? `${GOLD}22` : "transparent",
+                color: watermark === opt.id ? GOLD_LIGHT : TEXT_DIM,
+                cursor: "pointer", fontFamily: "'Outfit', sans-serif",
+                transition: "all 0.15s", letterSpacing: 0.3,
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         {/* Info & download bar */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 0", gap: 16,
+          padding: "8px 0", gap: 16,
         }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 400, color: TEXT_PRIMARY }}>
@@ -661,10 +779,9 @@ function Lightbox({ images, currentIndex, onClose, onNavigate }) {
           </div>
           <button
             onClick={() => {
-              // In production: trigger download of the full-res image (no watermark)
               const link = document.createElement("a");
               link.href = getImageUrl(current.filename, "full");
-              link.download = current.filename.replace("_thumb", "_full");
+              link.download = current.filename.replace(/\.webp$/i, ".JPG");
               link.click();
             }}
             style={{
@@ -676,7 +793,7 @@ function Lightbox({ images, currentIndex, onClose, onNavigate }) {
               whiteSpace: "nowrap",
             }}
           >
-            {Icons.download} Download (no watermark)
+            {Icons.download} Download
           </button>
         </div>
       </div>
