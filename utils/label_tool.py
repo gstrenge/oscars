@@ -1,3 +1,4 @@
+import argparse
 import io
 import json
 import os
@@ -7,10 +8,25 @@ from flask import Flask, jsonify, request, send_from_directory, send_file
 
 app = Flask(__name__)
 
-BASE_DIR = Path(__file__).parent
-IMGS_DIR = BASE_DIR / "imgs"
+parser = argparse.ArgumentParser(description="Photo labeling tool")
+parser.add_argument(
+    "--imgs", default=None,
+    help="Path to images directory (default: ../imgs relative to this script)",
+)
+parser.add_argument(
+    "--labels", default=None,
+    help="Path to labels.json file (default: ../labels.json relative to this script)",
+)
+parser.add_argument(
+    "--port", type=int, default=5050,
+    help="Port to run the server on (default: 5050)",
+)
+args, _ = parser.parse_known_args()
+
+BASE_DIR = Path(__file__).parent.parent
+IMGS_DIR = Path(args.imgs) if args.imgs else BASE_DIR / "imgs"
 THUMBS_DIR = BASE_DIR / ".thumbs"
-LABELS_FILE = BASE_DIR / "labels.json"
+LABELS_FILE = Path(args.labels) if args.labels else BASE_DIR / "labels.json"
 
 
 def load_labels():
@@ -520,7 +536,7 @@ init();
 """
 
 if __name__ == "__main__":
-    print(f"\n  Images dir: {IMGS_DIR}")
+    print(f"\n  Images dir:  {IMGS_DIR}")
     print(f"  Labels file: {LABELS_FILE}")
-    print(f"  Open http://localhost:5050 in your browser\n")
-    app.run(port=5050, debug=False)
+    print(f"  Open http://localhost:{args.port} in your browser\n")
+    app.run(port=args.port, debug=False)

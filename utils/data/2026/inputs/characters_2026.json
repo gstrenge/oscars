@@ -1,0 +1,27 @@
+{
+  "year": 2026,
+  "characters": [
+    { "name": "Cali McCoy",         "character": "Dr. Kelson",                "movie": "28 Years Later",          "director": "Danny Boyle" },
+    { "name": "Nicole Abbatine",    "character": "Liesl",                     "movie": "The Phoenician Scheme",   "director": "Wes Anderson" },
+    { "name": "Garrit Strenge",     "character": "Nick Wilde",                "movie": "Zootopia 2",              "director": "Jared Bush" },
+    { "name": "Zoe Zents",          "character": "Judy Hopps",                "movie": "Zootopia 2",              "director": "Jared Bush" },
+    { "name": "Erik Zilber",        "character": "Sir Lord Jimmy Crystal",    "movie": "28 Years Later",          "director": "Danny Boyle" },
+    { "name": "Kyle Wheeler",       "character": "Marty Mauser",              "movie": "Marty Supreme",           "director": "Josh Safdie" },
+    { "name": "Kathryn Jemas",      "character": "Rachel Mizler",             "movie": "Marty Supreme",           "director": "Josh Safdie" },
+    { "name": "Jared Cohen",        "character": "Jinu",                      "movie": "Kpop Demon Hunters",      "director": "Maggie Kang" },
+    { "name": "Grace Miller",       "character": "Rumi",                      "movie": "Kpop Demon Hunters",      "director": "Maggie Kang" },
+    { "name": "Nathan Moelis",      "character": "Marty Mauser",              "movie": "Marty Supreme",           "director": "Josh Safdie" },
+    { "name": "Kim Rosell",         "character": "Lilo",                      "movie": "Lilo & Stitch",           "director": "Dean Fleischer Camp" },
+    { "name": "Michael Pond",       "character": "Stitch",                    "movie": "Lilo & Stitch",           "director": "Dean Fleischer Camp" },
+    { "name": "Ben Thacher",        "character": "Olga The Cat",              "movie": "Sorry, Baby",             "director": "Eva Victor" },
+    { "name": "Gracie Rosenbaum",   "character": "Agnes",                     "movie": "Sorry, Baby",             "director": "Eva Victor" },
+    { "name": "Pilar Hincapie",     "character": "Willa Ferguson",            "movie": "One Battle After Another","director": "Francis Ford Coppola" },
+    { "name": "Grace O'Dwyer",      "character": "Bald Michelle",             "movie": "Bugonia",                 "director": "Timo Tjahjanto" },
+    { "name": "Simon Carapella",    "character": "Teddy",                     "movie": "Bugonia",                 "director": "Timo Tjahjanto" },
+    { "name": "Nick Kasun",         "character": "Sensei Sergio St. Carlos",  "movie": "One Battle After Another","director": "Francis Ford Coppola" },
+    { "name": "Griffin Prushinski", "character": "William Shakespeare",       "movie": "Hamnet",                  "director": "Chloé Zhao" },
+    { "name": "Abby Langan",        "character": "Agnes",                     "movie": "Hamnet",                  "director": "Chloé Zhao" },
+    { "name": "Amelia Langan",      "character": "Final-Form Alien Michelle", "movie": "Bugonia",                 "director": "Timo Tjahjanto" },
+    { "name": "Bradley Bares",      "character": "Marty Mauser",              "movie": "Marty Supreme",           "director": "Josh Safdie" }
+  ]
+}
