@@ -2,7 +2,7 @@ import io
 import json
 import os
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageOps
 from flask import Flask, jsonify, request, send_from_directory, send_file
 
 app = Flask(__name__)
@@ -59,6 +59,7 @@ def serve_preview(filepath):
         return send_file(cached, mimetype="image/jpeg")
 
     img = Image.open(src)
+    img = ImageOps.exif_transpose(img)
     img.thumbnail((max_w, max_w), Image.LANCZOS)
     cached.parent.mkdir(parents=True, exist_ok=True)
     img.save(cached, "JPEG", quality=80)
@@ -107,6 +108,56 @@ def api_remove_label():
         data["labels"][photo].remove(person)
         if not data["labels"][photo]:
             del data["labels"][photo]
+    save_labels(data)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/rotate", methods=["POST"])
+def api_rotate():
+    body = request.json
+    photo = body["photo"]
+    src = IMGS_DIR / photo
+    if not src.exists():
+        return "Not found", 404
+
+    img = Image.open(src)
+    img = ImageOps.exif_transpose(img)
+    img = img.rotate(-90, expand=True)
+    img.save(src, "JPEG", quality=95)
+    img.close()
+
+    # Invalidate cached previews for this photo
+    for cached in THUMBS_DIR.rglob(f"*/{photo}"):
+        cached.unlink(missing_ok=True)
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/labels_bulk", methods=["POST"])
+def api_labels_bulk():
+    """Set all labels for a photo at once."""
+    body = request.json
+    photo = body["photo"]
+    people_list = body["people"]
+
+    data = load_labels()
+    for person in people_list:
+        if person not in data["people"]:
+            data["people"].append(person)
+            data["people"].sort()
+    data["labels"][photo] = people_list
+    save_labels(data)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/labels_clear", methods=["POST"])
+def api_labels_clear():
+    """Remove all labels from a photo."""
+    body = request.json
+    photo = body["photo"]
+    data = load_labels()
+    if photo in data["labels"]:
+        del data["labels"][photo]
     save_labels(data)
     return jsonify({"ok": True})
 
@@ -189,7 +240,7 @@ FRONTEND_HTML = r"""<!DOCTYPE html>
       <div id="tags"></div>
     </div>
     <div class="shortcuts">
-      <kbd>Tab</kbd> autocomplete &nbsp; <kbd>Enter</kbd> add &nbsp; <kbd>←</kbd><kbd>→</kbd> navigate &nbsp; <kbd>Ctrl+S</kbd> skip (no people)
+      <kbd>Tab</kbd> autocomplete &nbsp; <kbd>Enter</kbd> add/next &nbsp; <kbd>Backspace</kbd> clear all &nbsp; <kbd>←</kbd><kbd>→</kbd> nav &nbsp; <kbd>R</kbd> rotate
     </div>
     <div id="input-area">
       <div id="autocomplete"></div>
@@ -299,9 +350,28 @@ function updateProgress() {
 }
 
 function go(dir) {
-  idx = Math.max(0, Math.min(filtered.length - 1, idx + dir));
+  const prevPhoto = filtered[idx];
+  const prevLabels = (prevPhoto && labels[prevPhoto]) ? [...labels[prevPhoto]] : [];
+  const newIdx = Math.max(0, Math.min(filtered.length - 1, idx + dir));
+  if (newIdx === idx) return;
+  idx = newIdx;
+  const newPhoto = filtered[idx];
+
+  if (dir === 1 && prevLabels.length > 0 && labels[newPhoto] === undefined) {
+    labels[newPhoto] = [...prevLabels];
+    fetch('/api/labels_bulk', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({photo: newPhoto, people: prevLabels}) });
+  }
+
   document.getElementById('name-input').value = '';
   hideAC();
+  render();
+}
+
+async function clearLabels() {
+  const photo = filtered[idx];
+  if (!photo || !labels[photo] || labels[photo].length === 0) return;
+  delete labels[photo];
+  await fetch('/api/labels_clear', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({photo}) });
   render();
 }
 
@@ -334,6 +404,13 @@ async function skipPhoto() {
   if (labels[photo] === undefined) labels[photo] = [];
   render();
   go(1);
+}
+
+async function rotatePhoto() {
+  const photo = filtered[idx];
+  if (!photo) return;
+  await fetch('/api/rotate', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({photo}) });
+  document.getElementById('photo').src = '/preview/' + photo + '?w=1600&t=' + Date.now();
 }
 
 // Autocomplete
@@ -414,6 +491,7 @@ input.addEventListener('keydown', (e) => {
     items.forEach((el, i) => el.classList.toggle('selected', i === acIndex));
     return;
   }
+  if (e.key === 'Backspace' && input.value === '') { e.preventDefault(); clearLabels(); return; }
   if (e.key === 'Escape') { hideAC(); input.blur(); }
 });
 
@@ -430,6 +508,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') go(-1);
   if (e.key === 'ArrowRight') go(1);
   if (e.key === 's' && e.ctrlKey) { e.preventDefault(); skipPhoto(); }
+  if (e.key === 'r') { e.preventDefault(); rotatePhoto(); }
   if (e.key === '/' || e.key === 'Enter') { e.preventDefault(); input.focus(); }
 });
 
