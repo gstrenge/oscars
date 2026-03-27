@@ -1,13 +1,14 @@
 """
-Converts labels.json face labels into the CEREMONY_DATA attendees format
+Converts labels.json face labels into a full ceremony JSON file
 used by src/index.jsx.
 
-For each person, collects all images they appear in (using .webp filenames,
-with the photographer subfolder included in the path).
+Combines multiple input sources:
+  - labels.json: face labels from the labeling tool
+  - characters_YEAR.json: character/movie/director metadata
+  - predictions.json: output from convert_predictions.py (optional)
+  - awards.json: ceremony awards with winners (optional)
 
-Also reads characters_<year>.json (if present) to fill in character/movie fields.
-
-Output: ceremony_attendees.json with attendees and movies arrays.
+Output: ceremony JSON with attendees, movies, predictions, and awards.
 """
 
 import argparse
@@ -45,6 +46,14 @@ def main():
     parser.add_argument(
         "--characters",
         help="Path to characters_YEAR.json (default: auto-detected as characters_<year>.json)",
+    )
+    parser.add_argument(
+        "--predictions",
+        help="Path to predictions.json (output from convert_predictions.py)",
+    )
+    parser.add_argument(
+        "--awards",
+        help="Path to awards JSON file",
     )
     parser.add_argument(
         "--output", default="ceremony_attendees.json",
@@ -113,16 +122,41 @@ def main():
                 "imdb": "#",
             })
 
+    # Load predictions if provided
+    predictions = None
+    if args.predictions and os.path.exists(args.predictions):
+        with open(args.predictions, encoding="utf-8") as f:
+            predictions = json.load(f)
+        print(f"Loaded predictions from {args.predictions} ({len(predictions['picks'])} participants)")
+
+    # Load awards if provided
+    awards = None
+    if args.awards and os.path.exists(args.awards):
+        with open(args.awards, encoding="utf-8") as f:
+            awards_data = json.load(f)
+        awards = awards_data.get("awards", [])
+        print(f"Loaded awards from {args.awards} ({len(awards)} awards)")
+
     output = {
         "year": year,
         "attendees": attendees,
         "movies": movies,
     }
+    if awards is not None:
+        output["awards"] = awards
+    if predictions is not None:
+        output["predictions"] = predictions
 
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"Written {args.output}  (year={year}, {len(attendees)} attendees, {len(movies)} movies)")
+    parts = [f"{len(attendees)} attendees", f"{len(movies)} movies"]
+    if awards is not None:
+        parts.append(f"{len(awards)} awards")
+    if predictions is not None:
+        parts.append(f"{len(predictions['picks'])} predictions")
+    print(f"\nWritten {args.output}  (year={year}, {', '.join(parts)})")
+
     for a in attendees:
         char_str = f"as {a['character']}" if a["character"] else "(no character)"
         print(f"  {a['name']:25s}  {len(a['images']):3d} images  {char_str}")
