@@ -45,12 +45,9 @@ function placeholderImage(filename, size = "thumb") {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-function getImageUrl(filename, size = "thumb") {
+function getImageUrl(filename) {
   if (!filename) return "";
-  const base = import.meta.env.BASE_URL;
-  // .webp files are used for thumbnails; swap to .JPG for full-quality lightbox
-  if (size === "full") return `${base}imgs/${filename.replace(/\.webp$/i, ".JPG")}`;
-  return `${base}imgs/${filename}`;
+  return `${import.meta.env.BASE_URL}imgs/${filename}`;
 }
 
 // ─── ROUTER ─────────────────────────────────────────────────────────────────
@@ -777,24 +774,48 @@ function Lightbox({ images, currentIndex, onClose, onNavigate }) {
             </div>
             <div style={{ fontSize: 12, color: TEXT_DIM }}>{current.movie} · {current.year}</div>
           </div>
-          <button
-            onClick={() => {
-              const link = document.createElement("a");
-              link.href = getImageUrl(current.filename, "full");
-              link.download = current.filename.replace(/\.webp$/i, ".JPG");
-              link.click();
-            }}
-            style={{
-              background: `linear-gradient(135deg, ${GOLD_DARK}, ${GOLD})`,
-              border: "none", borderRadius: 6, padding: "8px 20px",
-              color: BG_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer",
-              fontFamily: "'Outfit', sans-serif",
-              display: "flex", alignItems: "center", gap: 8,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {Icons.download} Download
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            {watermark !== "none" && (
+              <button
+                onClick={() => {
+                  canvasRef.current.toBlob((blob) => {
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = current.filename.replace(/\.webp$/i, ".jpg");
+                    link.click();
+                  }, "image/jpeg", 0.92);
+                }}
+                style={{
+                  background: `linear-gradient(135deg, ${GOLD_DARK}, ${GOLD})`,
+                  border: "none", borderRadius: 6, padding: "8px 20px",
+                  color: BG_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  fontFamily: "'Outfit', sans-serif",
+                  display: "flex", alignItems: "center", gap: 8,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {Icons.download} With watermark
+              </button>
+            )}
+            <button
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = getImageUrl(current.filename);
+                link.download = current.filename;
+                link.click();
+              }}
+              style={{
+                background: "transparent",
+                border: `1px solid ${GOLD_DARK}`, borderRadius: 6, padding: "8px 20px",
+                color: GOLD, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: "'Outfit', sans-serif",
+                display: "flex", alignItems: "center", gap: 8,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {Icons.download} Original
+            </button>
+          </div>
         </div>
       </div>
     </div>
