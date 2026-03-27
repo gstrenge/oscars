@@ -1,0 +1,117 @@
+{
+    "year": 2025,
+    "ordinal": "1st",
+    "date": "March 1, 2025",
+    "bio": "The inaugural Cali's Oscars brought together friends and film lovers for a night of cinematic celebration. Guests arrived dressed as their favorite characters from the year's most acclaimed films — from the sweeping deserts of Dune to the gritty streets of The Brutalist. An unforgettable evening of costumes, laughter, and love for the movies.",
+    "attendees": [
+        {
+            "name": "Garrit Strenge",
+            "slug": "garrit-strenge",
+            "character": "Paul Atreides",
+            "movie": "Dune: Part Two",
+            "images": [
+                "1709300000_jsmith_thumb.jpg",
+                "1709300100_jsmith_thumb.jpg",
+                "1709300200_alee_thumb.jpg"
+            ]
+        },
+        {
+            "name": "Maya Chen",
+            "slug": "maya-chen",
+            "character": "Zora Neale",
+            "movie": "The Brutalist",
+            "images": [
+                "1709300300_bwong_thumb.jpg",
+                "1709300400_bwong_thumb.jpg"
+            ]
+        },
+        {
+            "name": "Leo Alvarez",
+            "slug": "leo-alvarez",
+            "character": "Emilia Pérez",
+            "movie": "Emilia Pérez",
+            "images": [
+                "1709300500_cpark_thumb.jpg",
+                "1709300600_cpark_thumb.jpg",
+                "1709300700_jsmith_thumb.jpg"
+            ]
+        },
+        {
+            "name": "Priya Nair",
+            "slug": "priya-nair",
+            "character": "Elphaba",
+            "movie": "Wicked",
+            "images": [
+                "1709300800_alee_thumb.jpg",
+                "1709300900_alee_thumb.jpg"
+            ]
+        },
+        {
+            "name": "Jordan Kim",
+            "slug": "jordan-kim",
+            "character": "Anora",
+            "movie": "Anora",
+            "images": [
+                "1709301000_dchen_thumb.jpg",
+                "1709301100_dchen_thumb.jpg",
+                "1709301200_jsmith_thumb.jpg"
+            ]
+        },
+        {
+            "name": "Sam Rivera",
+            "slug": "sam-rivera",
+            "character": "Marcello",
+            "movie": "Conclave",
+            "images": [
+                "1709301300_bwong_thumb.jpg"
+            ]
+        },
+        {
+            "name": "Ava Okonkwo",
+            "slug": "ava-okonkwo",
+            "character": "Fernanda Torres",
+            "movie": "I'm Still Here",
+            "images": [
+                "1709301400_cpark_thumb.jpg",
+                "1709301500_cpark_thumb.jpg"
+            ]
+        }
+    ],
+    "movies": [
+        {
+            "title": "Dune: Part Two",
+            "director": "Denis Villeneuve",
+            "imdb": "https://imdb.com/title/tt15239678"
+        },
+        {
+            "title": "The Brutalist",
+            "director": "Brady Corbet",
+            "imdb": "https://imdb.com/title/tt16277242"
+        },
+        {
+            "title": "Emilia Pérez",
+            "director": "Jacques Audiard",
+            "imdb": "https://imdb.com/title/tt20221436"
+        },
+        {
+            "title": "Wicked",
+            "director": "Jon M. Chu",
+            "imdb": "https://imdb.com/title/tt1262426"
+        },
+        {
+            "title": "Anora",
+            "director": "Sean Baker",
+            "imdb": "https://imdb.com/title/tt28607951"
+        },
+        {
+            "title": "Conclave",
+            "director": "Edward Berger",
+            "imdb": "https://imdb.com/title/tt20215234"
+        },
+        {
+            "title": "I'm Still Here",
+            "director": "Walter Salles",
+            "imdb": "https://imdb.com/title/tt14961016"
+        }
+    ]
+}
