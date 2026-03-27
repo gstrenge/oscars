@@ -924,6 +924,108 @@ function HomePage() {
   );
 }
 
+// ─── PREDICTIONS SECTION ────────────────────────────────────────────────────
+function PredictionsSection({ predictions }) {
+  const [expandedPerson, setExpandedPerson] = useState(null);
+  const { categories, answers, picks } = predictions;
+  const total = categories.length;
+
+  return (
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 40px" }}>
+      <h2 style={{
+        fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 400,
+        color: TEXT_PRIMARY, marginBottom: 20, letterSpacing: 1,
+        animation: "fadeUp 0.5s ease both", animationDelay: "0.25s",
+      }}>
+        Predictions
+      </h2>
+      <div style={{
+        borderRadius: 8, overflow: "hidden",
+        border: `1px solid ${BORDER}`, background: BG_CARD,
+        animation: "fadeUp 0.5s ease both", animationDelay: "0.3s",
+      }}>
+        {/* Header */}
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr auto",
+          padding: "14px 20px", borderBottom: `1px solid ${BORDER}`,
+          background: BG_SECONDARY,
+        }}>
+          <div style={{ fontSize: 11, color: TEXT_DIM, letterSpacing: 1.5, textTransform: "uppercase" }}>Name</div>
+          <div style={{ fontSize: 11, color: TEXT_DIM, letterSpacing: 1.5, textTransform: "uppercase" }}>Score</div>
+        </div>
+
+        {/* Rows */}
+        {picks.map((p, i) => {
+          const isExpanded = expandedPerson === p.name;
+          const isTop = i === 0 || p.score === picks[0].score;
+          return (
+            <div key={p.name}>
+              <div
+                onClick={() => setExpandedPerson(isExpanded ? null : p.name)}
+                style={{
+                  display: "grid", gridTemplateColumns: "1fr auto",
+                  padding: "12px 20px",
+                  borderBottom: `1px solid ${BORDER}`,
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                  background: isExpanded ? BG_SECONDARY : "transparent",
+                }}
+                onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.background = BG_SECONDARY; }}
+                onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.background = "transparent"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 15, color: isTop ? GOLD_LIGHT : TEXT_PRIMARY, fontWeight: isTop ? 500 : 400 }}>
+                    {p.name}
+                  </span>
+                  {isTop && <span style={{ fontSize: 11, color: GOLD, fontWeight: 500 }}>&#9733;</span>}
+                </div>
+                <div style={{
+                  fontSize: 15, fontVariantNumeric: "tabular-nums",
+                  color: isTop ? GOLD_LIGHT : TEXT_DIM,
+                  fontWeight: isTop ? 500 : 400,
+                }}>
+                  {p.score}/{total}
+                </div>
+              </div>
+
+              {/* Expanded picks detail */}
+              {isExpanded && (
+                <div style={{
+                  padding: "12px 20px 16px",
+                  borderBottom: `1px solid ${BORDER}`,
+                  background: BG_SECONDARY,
+                }}>
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                    gap: "6px 24px", fontSize: 13,
+                  }}>
+                    {categories.map((cat) => {
+                      const pick = p.picks[cat];
+                      const answer = answers[cat];
+                      const correct = Array.isArray(answer) ? answer.includes(pick) : pick === answer;
+                      return (
+                        <div key={cat} style={{ display: "flex", gap: 8, alignItems: "baseline", padding: "2px 0" }}>
+                          <span style={{ color: correct ? "#4ade80" : "#f87171", flexShrink: 0 }}>
+                            {correct ? "\u2713" : "\u2717"}
+                          </span>
+                          <span style={{ color: TEXT_DIM, flexShrink: 0, minWidth: 0 }}>{cat}:</span>
+                          <span style={{ color: correct ? TEXT_PRIMARY : TEXT_DIM, fontWeight: correct ? 400 : 300 }}>
+                            {pick}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ─── PAGE: CEREMONY ─────────────────────────────────────────────────────────
 function CeremonyPage({ year }) {
   const ceremony = CEREMONY_DATA[year];
@@ -992,6 +1094,49 @@ function CeremonyPage({ year }) {
           ))}
         </div>
       </section>
+
+      {/* Awards */}
+      {ceremony.awards && ceremony.awards.length > 0 && (
+        <section style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 40px" }}>
+          <h2 style={{
+            fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 400,
+            color: TEXT_PRIMARY, marginBottom: 20, letterSpacing: 1,
+            animation: "fadeUp 0.5s ease both", animationDelay: "0.2s",
+          }}>
+            Awards
+          </h2>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 16,
+          }}>
+            {ceremony.awards.map((award, i) => (
+              <div key={award.title} style={{
+                padding: "24px", borderRadius: 8,
+                background: BG_CARD, border: `1px solid ${BORDER}`,
+                animation: "fadeUp 0.4s ease both",
+                animationDelay: `${0.25 + i * 0.06}s`,
+              }}>
+                <div style={{
+                  fontSize: 11, color: GOLD, letterSpacing: 2, textTransform: "uppercase",
+                  marginBottom: 10, fontWeight: 500,
+                }}>
+                  {award.title}
+                </div>
+                {award.winners.map((w) => (
+                  <div key={w} style={{ fontSize: 18, fontWeight: 400, color: TEXT_PRIMARY, lineHeight: 1.4 }}>
+                    {w}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Predictions Leaderboard */}
+      {ceremony.predictions && (
+        <PredictionsSection predictions={ceremony.predictions} />
+      )}
 
       {/* Photo Gallery */}
       <section style={{
