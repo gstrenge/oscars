@@ -7,6 +7,9 @@ dist/
 # tooling scratch files
 .thumbs/
 
+# JPGs for now
+public/imgs/*.JPG
+
 # Python
 __pycache__/
 *.pyc
