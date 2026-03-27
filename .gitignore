@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# tooling scratch files
+.thumbs/
+
+# Python
+__pycache__/
+*.pyc
+
+# intermediate data files (source of truth is index.jsx)
+ceremony_attendees.json
+
+# OS
+.DS_Store
+Thumbs.db
