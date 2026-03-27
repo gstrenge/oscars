@@ -10,13 +10,11 @@ Also reads characters_<year>.json (if present) to fill in character/movie fields
 Output: ceremony_attendees.json with attendees and movies arrays.
 """
 
+import argparse
 import json
 import os
 import re
 from collections import defaultdict
-
-LABELS_FILE = "labels.json"
-OUTPUT_FILE = "ceremony_attendees.json"
 
 # Infer year from filename timestamps (e.g. 20260315 -> 2026)
 def infer_year(labels: dict) -> int:
@@ -39,7 +37,22 @@ def label_key_to_webp_path(key: str) -> str:
     return f"{base}.webp"
 
 def main():
-    with open(LABELS_FILE, encoding="utf-8") as f:
+    parser = argparse.ArgumentParser(description="Convert face labels to ceremony JSON.")
+    parser.add_argument(
+        "--labels", default="labels.json",
+        help="Path to labels.json (default: labels.json)",
+    )
+    parser.add_argument(
+        "--characters",
+        help="Path to characters_YEAR.json (default: auto-detected as characters_<year>.json)",
+    )
+    parser.add_argument(
+        "--output", default="ceremony_attendees.json",
+        help="Path to write output JSON (default: ceremony_attendees.json)",
+    )
+    args = parser.parse_args()
+
+    with open(args.labels, encoding="utf-8") as f:
         data = json.load(f)
 
     people: list[str] = data["people"]
@@ -48,7 +61,7 @@ def main():
     year = infer_year(labels)
 
     # Load character/movie metadata if available
-    chars_file = f"characters_{year}.json"
+    chars_file = args.characters or f"characters_{year}.json"
     char_meta: dict[str, dict] = {}  # name -> {character, movie, director}
     movie_directors: dict[str, str] = {}  # movie title -> director
     if os.path.exists(chars_file):
@@ -106,10 +119,10 @@ def main():
         "movies": movies,
     }
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    with open(args.output, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"Written {OUTPUT_FILE}  (year={year}, {len(attendees)} attendees, {len(movies)} movies)")
+    print(f"Written {args.output}  (year={year}, {len(attendees)} attendees, {len(movies)} movies)")
     for a in attendees:
         char_str = f"as {a['character']}" if a["character"] else "(no character)"
         print(f"  {a['name']:25s}  {len(a['images']):3d} images  {char_str}")

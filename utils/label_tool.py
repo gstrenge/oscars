@@ -445,7 +445,7 @@ input.addEventListener('input', () => {
   // Ghost text: show first match that starts with input
   const startMatch = matches.find(p => p.toLowerCase().startsWith(val));
   if (startMatch) {
-    ghost.textContent = input.value + startMatch.slice(input.value.length);
+    ghost.textContent = startMatch;
   }
 
   acIndex = -1;
