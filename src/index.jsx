@@ -496,8 +496,27 @@ function PhotoGallery({ images, year }) {
           </button>
           <button
             onClick={() => {
-              // In production: use JSZip to bundle selected full-res images
-              alert(`Download ${selected.size} photos\n\nIn production, this uses JSZip to bundle:\n${[...selected].join("\n")}`);
+              const files = [...selected];
+              files.forEach((filename, i) => {
+                setTimeout(() => {
+                  const img = new Image();
+                  img.crossOrigin = "anonymous";
+                  img.onload = () => {
+                    const c = document.createElement("canvas");
+                    c.width = img.naturalWidth;
+                    c.height = img.naturalHeight;
+                    c.getContext("2d").drawImage(img, 0, 0);
+                    c.toBlob((blob) => {
+                      const a = document.createElement("a");
+                      a.href = URL.createObjectURL(blob);
+                      a.download = filename.replace(/\.webp$/i, ".jpg");
+                      a.click();
+                      URL.revokeObjectURL(a.href);
+                    }, "image/jpeg", 0.92);
+                  };
+                  img.src = getImageUrl(filename);
+                }, i * 200);
+              });
             }}
             style={{
               background: `linear-gradient(135deg, ${GOLD_DARK}, ${GOLD})`,
