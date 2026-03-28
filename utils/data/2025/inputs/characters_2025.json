@@ -1,0 +1,19 @@
+{
+  "year": 2025,
+  "characters": [
+    { "name": "Cali McCoy",      "character": "Nicole Kidman",       "movie": "AMC Ad",              "director": "" },
+    { "name": "Nicole Abbatine", "character": "Bob",                 "movie": "Beetlejuice Beetlejuice", "director": "Tim Burton" },
+    { "name": "Garrit Strenge",  "character": "Paul Atreides",       "movie": "Dune: Part Two",      "director": "Denis Villeneuve" },
+    { "name": "Erik Zilber",     "character": "Patrick Zweig",       "movie": "Challengers",         "director": "Luca Guadagnino" },
+    { "name": "Kyle Wheeler",    "character": "Art Donaldson",       "movie": "Challengers",         "director": "Luca Guadagnino" },
+    { "name": "Kathryn Jemas",   "character": "Tashi Duncan",        "movie": "Challengers",         "director": "Luca Guadagnino" },
+    { "name": "Jared Cohen",     "character": "Master Oogway",       "movie": "Kung Fu Panda 4",     "director": "Mike Mitchell" },
+    { "name": "Grace Miller",    "character": "Tashi Duncan",        "movie": "Challengers",         "director": "Luca Guadagnino" },
+    { "name": "Nathan Moelis",   "character": "Igor",                "movie": "Anora",               "director": "Sean Baker" },
+    { "name": "Pilar Hincapie",  "character": "Jackie",              "movie": "Love Lies Bleeding",  "director": "Rose Glass" },
+    { "name": "Brendan Baron",   "character": "Lou",                 "movie": "Love Lies Bleeding",  "director": "Rose Glass" },
+    { "name": "Grace O'Dwyer",   "character": "Minion",              "movie": "Despicable Me 4",     "director": "Chris Renaud" },
+    { "name": "Simon Carapella", "character": "Minion",              "movie": "Despicable Me 4",     "director": "Chris Renaud" },
+    { "name": "Ava Stigler",     "character": "Elizabeth Sparkle",   "movie": "The Substance",       "director": "Coralie Fargeat" }
+  ]
+}
