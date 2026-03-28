@@ -39,12 +39,13 @@ def save_labels(data):
 
 def get_all_photos():
     photos = []
-    for folder in sorted(IMGS_DIR.iterdir()):
-        if not folder.is_dir():
-            continue
-        for img in sorted(folder.iterdir()):
-            if img.suffix.lower() in (".jpg", ".jpeg", ".png", ".tiff", ".heic"):
-                photos.append(f"{folder.name}/{img.name}")
+    for item in sorted(IMGS_DIR.iterdir()):
+        if item.is_file() and item.suffix.lower() in (".jpg", ".jpeg", ".png", ".tiff", ".heic"):
+            photos.append(item.name)
+        elif item.is_dir():
+            for img in sorted(item.iterdir()):
+                if img.suffix.lower() in (".jpg", ".jpeg", ".png", ".tiff", ".heic"):
+                    photos.append(f"{item.name}/{img.name}")
     return photos
 
 

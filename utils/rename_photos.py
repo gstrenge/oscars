@@ -1,22 +1,24 @@
 """
 Utility to rename photos using EXIF DateTimeOriginal metadata.
 
-Renames files to the format:
+Reads photos from an input directory and writes renamed copies to an
+output directory using the format:
     YYYYMMDD_HHMMSS_Firstname_Lastname[_N].ext
 
 Where the timestamp comes from the photo's EXIF DateTimeOriginal field.
-Duplicate timestamps within the same folder get a _1, _2, etc. suffix.
+Duplicate timestamps get a _1, _2, etc. suffix.
 
 Usage:
-    python utils/rename_photos.py <year_dir> <subfolder> <firstname> <lastname> [--dry-run]
+    python utils/rename_photos.py <input_dir> <output_dir> <firstname> <lastname> [--dry-run]
 
 Examples:
-    python utils/rename_photos.py utils/data/2026 timestamp_Garrit_Strenge Garrit Strenge
-    python utils/rename_photos.py utils/data/2026 timestamp_Kyle_Wheeler Kyle Wheeler --dry-run
+    python utils/rename_photos.py /media/camera utils/data/2027/inputs/imgs Garrit Strenge --dry-run
+    python utils/rename_photos.py ~/Downloads/photos utils/data/2027/inputs/imgs Kyle Wheeler
 """
 
 import argparse
 import os
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -30,8 +32,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Rename photos using EXIF DateTimeOriginal metadata."
     )
-    parser.add_argument("year_dir", help="Path to the year directory (e.g. utils/data/2026)")
-    parser.add_argument("subfolder", help="Photographer subfolder name within inputs/imgs/")
+    parser.add_argument("input_dir", help="Path to the directory of source photos")
+    parser.add_argument("output_dir", help="Path to the directory to write renamed photos")
     parser.add_argument("firstname", help="Photographer's first name")
     parser.add_argument("lastname", help="Photographer's last name")
     parser.add_argument(
@@ -60,15 +62,15 @@ def get_exif_datetime(filepath):
 
 def main():
     args = parse_args()
-    folder = Path(args.year_dir) / "inputs" / "imgs" / args.subfolder
-    folder = folder.resolve()
+    input_dir = Path(args.input_dir).resolve()
+    output_dir = Path(args.output_dir).resolve()
 
-    if not folder.is_dir():
-        print(f"Error: {folder} is not a directory")
+    if not input_dir.is_dir():
+        print(f"Error: {input_dir} is not a directory")
         sys.exit(1)
 
     files = sorted(
-        f for f in folder.iterdir()
+        f for f in input_dir.iterdir()
         if f.is_file() and f.suffix.lower() in PHOTO_EXTENSIONS
     )
 
@@ -76,14 +78,15 @@ def main():
         print("No photo files found.")
         sys.exit(0)
 
-    print(f"Folder:    {folder}")
+    print(f"Input:     {input_dir}")
+    print(f"Output:    {output_dir}")
     print(f"Author:    {args.firstname} {args.lastname}")
     print(f"Files:     {len(files)}")
     print()
 
     # Build rename plan
     seen_timestamps = {}
-    renames = []
+    copies = []
     skipped = []
 
     for f in files:
@@ -103,7 +106,7 @@ def main():
             seen_timestamps[base_name] = 0
             new_name = f"{base_name}{ext}"
 
-        renames.append((f, new_name))
+        copies.append((f, new_name))
 
     if skipped:
         print(f"WARNING: {len(skipped)} files have no EXIF DateTimeOriginal:")
@@ -112,27 +115,20 @@ def main():
         print()
 
     if args.dry_run:
-        print("DRY RUN — no files will be renamed:\n")
-        for orig, new_name in renames:
+        print("DRY RUN — no files will be copied:\n")
+        for orig, new_name in copies:
             print(f"  {orig.name}  ->  {new_name}")
-        print(f"\n{len(renames)} files would be renamed.")
+        print(f"\n{len(copies)} files would be copied.")
         return
 
-    # Two-phase rename to avoid collisions
-    print("Phase 1: Renaming to temporary names...")
-    temp_paths = []
-    for orig, new_name in renames:
-        temp_name = f"~tmp~{new_name}"
-        temp_path = orig.parent / temp_name
-        orig.rename(temp_path)
-        temp_paths.append(temp_path)
+    os.makedirs(output_dir, exist_ok=True)
 
-    print("Phase 2: Renaming to final names...")
-    for temp_path, (_, new_name) in zip(temp_paths, renames):
-        final_path = temp_path.parent / new_name
-        temp_path.rename(final_path)
+    print(f"Copying {len(copies)} files...")
+    for orig, new_name in copies:
+        dest = output_dir / new_name
+        shutil.copy2(orig, dest)
 
-    print(f"\nDone! {len(renames)} files renamed.")
+    print(f"\nDone! {len(copies)} files copied to {output_dir}")
 
 
 if __name__ == "__main__":

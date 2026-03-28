@@ -3,17 +3,17 @@ Utility to apply a time offset to photo filenames that follow the format:
     YYYYMMDD_HHMMSS_Firstname_Lastname[_N].ext
 
 Usage:
-    python utils/fix_timestamps.py <year_dir> <subfolder> <offset_seconds> [--dry-run]
+    python utils/fix_timestamps.py <image_dir> <offset_seconds> [--filter REGEX] [--dry-run]
 
 Examples:
-    # Subtract 30 minutes 18 seconds
-    python utils/fix_timestamps.py utils/data/2026 timestamp_Kyle_Wheeler -1818
+    # Subtract 30 minutes 18 seconds from all photos
+    python utils/fix_timestamps.py utils/data/2026/inputs/imgs -1818
 
-    # Add 5 minutes
-    python utils/fix_timestamps.py utils/data/2026 timestamp_Kyle_Wheeler 300
+    # Only fix Kyle Wheeler's photos
+    python utils/fix_timestamps.py utils/data/2026/inputs/imgs -1818 --filter Kyle_Wheeler
 
     # Preview changes without renaming
-    python utils/fix_timestamps.py utils/data/2026 timestamp_Kyle_Wheeler -1818 --dry-run
+    python utils/fix_timestamps.py utils/data/2026/inputs/imgs -1818 --filter Kyle_Wheeler --dry-run
 """
 
 import argparse
@@ -32,12 +32,15 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Apply a time offset to timestamped photo filenames."
     )
-    parser.add_argument("year_dir", help="Path to the year directory (e.g. utils/data/2026)")
-    parser.add_argument("subfolder", help="Photographer subfolder name within inputs/imgs/")
+    parser.add_argument("image_dir", help="Path to directory of timestamped photos")
     parser.add_argument(
         "offset_seconds",
         type=int,
         help="Seconds to add to each timestamp (negative to subtract)",
+    )
+    parser.add_argument(
+        "--filter",
+        help="Regex pattern to filter filenames (only matching files are modified)",
     )
     parser.add_argument(
         "--dry-run",
@@ -62,19 +65,25 @@ def compute_new_name(filename, offset):
 
 def main():
     args = parse_args()
-    folder = Path(args.year_dir) / "inputs" / "imgs" / args.subfolder
-    folder = folder.resolve()
+    folder = Path(args.image_dir).resolve()
 
     if not folder.is_dir():
         print(f"Error: {folder} is not a directory")
         sys.exit(1)
 
-    files = sorted(f for f in folder.iterdir() if f.is_file() and FILENAME_RE.match(f.name))
+    filter_re = re.compile(args.filter) if args.filter else None
+    files = sorted(
+        f for f in folder.iterdir()
+        if f.is_file() and FILENAME_RE.match(f.name)
+        and (filter_re is None or filter_re.search(f.name))
+    )
     if not files:
         print("No matching files found.")
         sys.exit(0)
 
     print(f"Folder:  {folder}")
+    if filter_re:
+        print(f"Filter:  {args.filter}")
     print(f"Offset:  {args.offset_seconds:+d} seconds")
     print(f"Files:   {len(files)}")
     print()

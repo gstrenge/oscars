@@ -1,17 +1,17 @@
 """
-Convert all photos in a year directory's inputs/imgs/ folder to WebP format.
+Convert all photos in a directory (recursively) to WebP format.
 
 Creates a .webp copy alongside each original, preserving the same filename
 and directory structure. Applies EXIF orientation before converting.
 Skips files that already have an up-to-date .webp version.
 
 Usage:
-    python utils/convert_webp.py <year_dir> [--quality 80] [--dry-run]
+    python utils/convert_webp.py <image_dir> [--quality 80] [--dry-run]
 
 Examples:
-    python utils/convert_webp.py utils/data/2026 --dry-run
-    python utils/convert_webp.py utils/data/2026
-    python utils/convert_webp.py utils/data/2026 --quality 90
+    python utils/convert_webp.py utils/data/2026/inputs/imgs --dry-run
+    python utils/convert_webp.py utils/data/2026/inputs/imgs
+    python utils/convert_webp.py utils/data/2026/inputs/imgs --quality 90
 """
 
 import argparse
@@ -27,7 +27,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Convert photos to WebP format."
     )
-    parser.add_argument("year_dir", help="Path to the year directory (e.g. utils/data/2026)")
+    parser.add_argument("image_dir", help="Path to directory of photos (searched recursively)")
     parser.add_argument(
         "--quality",
         type=int,
@@ -61,8 +61,7 @@ def convert_one(src, quality):
 
 def main():
     args = parse_args()
-    folder = Path(args.year_dir) / "inputs" / "imgs"
-    folder = folder.resolve()
+    folder = Path(args.image_dir).resolve()
 
     if not folder.is_dir():
         print(f"Error: {folder} is not a directory")
