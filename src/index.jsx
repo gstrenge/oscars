@@ -1099,7 +1099,7 @@ function CeremonyPage({ year }) {
           gap: 12,
         }}>
           {ceremony.attendees.map((a, i) => (
-            <Link key={a.slug} to={`#/people/${a.slug}`} style={{
+            <Link key={a.slug} to={`#/people/${a.slug}/${year}`} style={{
               padding: "16px 18px", borderRadius: 8,
               background: BG_CARD, border: `1px solid ${BORDER}`,
               transition: "all 0.2s",
@@ -1146,7 +1146,7 @@ function CeremonyPage({ year }) {
                   return (
                     <div key={w} style={{ lineHeight: 1.4 }}>
                       {attendee ? (
-                        <Link to={`#/people/${attendee.slug}`} style={{ fontSize: 18, fontWeight: 400, color: TEXT_PRIMARY }}>
+                        <Link to={`#/people/${attendee.slug}/${year}`} style={{ fontSize: 18, fontWeight: 400, color: TEXT_PRIMARY }}>
                           {w}
                           {attendee.character && (
                             <span style={{ fontSize: 13, color: TEXT_DIM, fontWeight: 300 }}> as {attendee.character}</span>
@@ -1238,12 +1238,18 @@ function PeoplePage() {
 }
 
 // ─── PAGE: PERSON DETAIL ────────────────────────────────────────────────────
-function PersonPage({ slug }) {
+function PersonPage({ slug, initialYear }) {
   const person = PEOPLE_INDEX[slug];
   if (!person) return <div style={{ padding: "120px 24px", textAlign: "center", color: TEXT_DIM }}>Person not found.</div>;
 
   const years = Object.keys(person.years).sort().reverse();
-  const [activeYear, setActiveYear] = useState(years[0]);
+  const defaultYear = initialYear && person.years[initialYear] ? initialYear : years[0];
+  const [activeYear, setActiveYear] = useState(defaultYear);
+
+  const changeYear = (yr) => {
+    setActiveYear(yr);
+    navigate(`#/people/${slug}/${yr}`);
+  };
   const yearData = person.years[activeYear];
 
   // Build images for gallery
@@ -1278,7 +1284,7 @@ function PersonPage({ slug }) {
           {years.map((yr) => (
             <button
               key={yr}
-              onClick={() => setActiveYear(yr)}
+              onClick={() => changeYear(yr)}
               style={{
                 background: "none", border: "none", cursor: "pointer",
                 fontFamily: "'Cormorant Garamond', serif", fontSize: 22,
@@ -1384,7 +1390,7 @@ function MoviesPage() {
                       {attendees.length > 0 && (
                         <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 10 }}>
                           {attendees.map((a) => (
-                            <Link key={a.slug} to={`#/people/${a.slug}`} style={{
+                            <Link key={a.slug} to={`#/people/${a.slug}/${yr}`} style={{
                               display: "block", fontSize: 12, color: GOLD,
                               marginTop: 4, transition: "color 0.15s",
                             }}>
@@ -1447,8 +1453,11 @@ export default function App() {
     page = <CeremonyPage year={year} />;
   } else if (route === "#/people") {
     page = <PeoplePage />;
-  } else if (route.match(/^#\/people\/(.+)$/)) {
-    const slug = route.match(/^#\/people\/(.+)$/)[1];
+  } else if (route.match(/^#\/people\/([^/]+)\/(\d{4})$/)) {
+    const m = route.match(/^#\/people\/([^/]+)\/(\d{4})$/);
+    page = <PersonPage slug={m[1]} initialYear={m[2]} />;
+  } else if (route.match(/^#\/people\/([^/]+)$/)) {
+    const slug = route.match(/^#\/people\/([^/]+)$/)[1];
     page = <PersonPage slug={slug} />;
   } else if (route === "#/movies") {
     page = <MoviesPage />;
