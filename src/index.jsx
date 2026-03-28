@@ -919,7 +919,7 @@ function HomePage() {
         {[
           { label: "Ceremonies", value: years.length },
           { label: "Guests", value: Object.keys(PEOPLE_INDEX).length },
-          { label: "Photos", value: Object.values(CEREMONY_DATA).reduce((sum, c) => sum + c.attendees.reduce((s, a) => s + a.images.length, 0), 0) },
+          { label: "Photos", value: new Set(Object.values(CEREMONY_DATA).flatMap((c) => c.attendees.flatMap((a) => a.images))).size },
           { label: "Movies Represented", value: Object.values(CEREMONY_DATA).reduce((sum, c) => sum + c.movies.length, 0) },
         ].map((stat, i) => (
           <div key={stat.label} style={{
