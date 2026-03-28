@@ -307,9 +307,12 @@ function FilterBar({ filters, activeFilter, onFilter, secondaryFilters, activeSe
 }
 
 // ─── PHOTO GALLERY ──────────────────────────────────────────────────────────
-function GalleryImage({ filename, year, attendeeName, character, movie, index, selected, onSelect, onClick, selectMode }) {
+function GalleryImage({ filename, year, people, index, selected, onSelect, onClick, selectMode }) {
   const [loaded, setLoaded] = useState(false);
   const src = getImageUrl(filename, "thumb");
+  const names = people.map((p) => p.name).join(", ");
+  const characters = [...new Set(people.map((p) => p.character))].join(", ");
+  const movies = [...new Set(people.map((p) => p.movie))].join(", ");
 
   return (
     <div
@@ -331,7 +334,7 @@ function GalleryImage({ filename, year, attendeeName, character, movie, index, s
       )}
       <img
         src={src}
-        alt={`${attendeeName} as ${character}`}
+        alt={`${names} as ${characters}`}
         loading="lazy"
         width={400} height={267}
         onLoad={() => setLoaded(true)}
@@ -364,10 +367,10 @@ function GalleryImage({ filename, year, attendeeName, character, movie, index, s
         pointerEvents: "none",
       }}>
         <div style={{ fontSize: 12, fontWeight: 400, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
-          {attendeeName}
+          {names}
         </div>
         <div style={{ fontSize: 10, color: TEXT_DIM }}>
-          {character} · {movie}
+          {characters} · {movies}
         </div>
       </div>
     </div>
@@ -382,15 +385,18 @@ function PhotoGallery({ images, year }) {
   const [lightbox, setLightbox] = useState(null);
   const ceremony = CEREMONY_DATA[year];
 
-  // Build flat image list with metadata
+  // Build flat image list with metadata, deduplicating by filename
   const allImages = useMemo(() => {
-    const list = [];
+    const map = new Map();
     ceremony.attendees.forEach((a) => {
       a.images.forEach((img) => {
-        list.push({ filename: img, attendeeName: a.name, slug: a.slug, character: a.character, movie: a.movie, year });
+        if (!map.has(img)) {
+          map.set(img, { filename: img, people: [], year });
+        }
+        map.get(img).people.push({ name: a.name, slug: a.slug, character: a.character, movie: a.movie });
       });
     });
-    return list;
+    return [...map.values()];
   }, [year]);
 
   // Filter options
@@ -427,9 +433,9 @@ function PhotoGallery({ images, year }) {
   const filteredImages = useMemo(() => {
     return allImages.filter((img) => {
       if (filter === "all") return true;
-      if (filterMode === "person") return img.slug === filter;
-      if (filterMode === "character") return img.character === filter;
-      if (filterMode === "movie") return img.movie === filter;
+      if (filterMode === "person") return img.people.some((p) => p.slug === filter);
+      if (filterMode === "character") return img.people.some((p) => p.character === filter);
+      if (filterMode === "movie") return img.people.some((p) => p.movie === filter);
       return true;
     });
   }, [allImages, filter, filterMode]);
@@ -548,8 +554,10 @@ function PhotoGallery({ images, year }) {
       }}>
         {filteredImages.map((img, i) => (
           <GalleryImage
-            key={`${img.slug}-${img.filename}`}
-            {...img}
+            key={img.filename}
+            filename={img.filename}
+            year={img.year}
+            people={img.people}
             index={i}
             selected={selected.has(img.filename)}
             onSelect={toggleSelect}
@@ -797,59 +805,56 @@ function Lightbox({ images, currentIndex, onClose, onNavigate }) {
           ))}
         </div>
 
-        {/* Info & download bar */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "8px 0", gap: 16,
-        }}>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 400, color: TEXT_PRIMARY }}>
-              {current.attendeeName} <span style={{ color: TEXT_DIM }}>as</span> {current.character}
-            </div>
-            <div style={{ fontSize: 12, color: TEXT_DIM }}>{current.movie} · {current.year}</div>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {watermark !== "none" && (
-              <button
-                onClick={() => {
-                  canvasRef.current.toBlob((blob) => {
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = current.filename.replace(/\.webp$/i, ".jpg");
-                    link.click();
-                  }, "image/jpeg", 0.92);
-                }}
-                style={{
-                  background: `linear-gradient(135deg, ${GOLD_DARK}, ${GOLD})`,
-                  border: "none", borderRadius: 6, padding: "8px 20px",
-                  color: BG_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer",
-                  fontFamily: "'Outfit', sans-serif",
-                  display: "flex", alignItems: "center", gap: 8,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {Icons.download} With watermark
-              </button>
-            )}
+        {/* Download buttons */}
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "6px 0" }}>
+          {watermark !== "none" && (
             <button
               onClick={() => {
-                const link = document.createElement("a");
-                link.href = getImageUrl(current.filename);
-                link.download = current.filename;
-                link.click();
+                canvasRef.current.toBlob((blob) => {
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = current.filename.replace(/\.webp$/i, ".jpg");
+                  link.click();
+                }, "image/jpeg", 0.92);
               }}
               style={{
-                background: "transparent",
-                border: `1px solid ${GOLD_DARK}`, borderRadius: 6, padding: "8px 20px",
-                color: GOLD, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                background: `linear-gradient(135deg, ${GOLD_DARK}, ${GOLD})`,
+                border: "none", borderRadius: 6, padding: "8px 20px",
+                color: BG_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer",
                 fontFamily: "'Outfit', sans-serif",
                 display: "flex", alignItems: "center", gap: 8,
                 whiteSpace: "nowrap",
               }}
             >
-              {Icons.download} Original
+              {Icons.download} With watermark
             </button>
+          )}
+          <button
+            onClick={() => {
+              const link = document.createElement("a");
+              link.href = getImageUrl(current.filename);
+              link.download = current.filename;
+              link.click();
+            }}
+            style={{
+              background: "transparent",
+              border: `1px solid ${GOLD_DARK}`, borderRadius: 6, padding: "8px 20px",
+              color: GOLD, fontSize: 13, fontWeight: 500, cursor: "pointer",
+              fontFamily: "'Outfit', sans-serif",
+              display: "flex", alignItems: "center", gap: 8,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {Icons.download} Original
+          </button>
+        </div>
+
+        {/* Photo info */}
+        <div style={{ textAlign: "center", padding: "4px 0" }}>
+          <div style={{ fontSize: 15, fontWeight: 400, color: TEXT_PRIMARY }}>
+            {current.people.map((p) => p.name).join(", ")} <span style={{ color: TEXT_DIM }}>as</span> {[...new Set(current.people.map((p) => p.character))].join(", ")}
           </div>
+          <div style={{ fontSize: 12, color: TEXT_DIM }}>{[...new Set(current.people.map((p) => p.movie))].join(", ")} · {current.year}</div>
         </div>
       </div>
     </div>
@@ -1264,10 +1269,7 @@ function PersonPage({ slug, initialYear }) {
   // Build images for gallery
   const allImages = yearData.images.map((img) => ({
     filename: img,
-    attendeeName: person.name,
-    slug: person.slug,
-    character: yearData.character,
-    movie: yearData.movie,
+    people: [{ name: person.name, slug: person.slug, character: yearData.character, movie: yearData.movie }],
     year: Number(activeYear),
   }));
 
@@ -1326,7 +1328,7 @@ function PersonPage({ slug, initialYear }) {
         }}>
           {allImages.map((img, i) => (
             <GalleryImage
-              key={`${img.slug}-${img.filename}`}
+              key={img.filename}
               {...img}
               index={i}
               selected={false}
