@@ -8,11 +8,11 @@ Where the timestamp comes from the photo's EXIF DateTimeOriginal field.
 Duplicate timestamps within the same folder get a _1, _2, etc. suffix.
 
 Usage:
-    python rename_photos.py <folder> <firstname> <lastname> [--dry-run]
+    python utils/rename_photos.py <year_dir> <subfolder> <firstname> <lastname> [--dry-run]
 
 Examples:
-    python rename_photos.py imgs/timestamp_Garrit_Strenge Garrit Strenge
-    python rename_photos.py imgs/timestamp_Kyle_Wheeler Kyle Wheeler --dry-run
+    python utils/rename_photos.py utils/data/2026 timestamp_Garrit_Strenge Garrit Strenge
+    python utils/rename_photos.py utils/data/2026 timestamp_Kyle_Wheeler Kyle Wheeler --dry-run
 """
 
 import argparse
@@ -30,7 +30,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Rename photos using EXIF DateTimeOriginal metadata."
     )
-    parser.add_argument("folder", help="Path to the folder of photos to rename")
+    parser.add_argument("year_dir", help="Path to the year directory (e.g. utils/data/2026)")
+    parser.add_argument("subfolder", help="Photographer subfolder name within inputs/imgs/")
     parser.add_argument("firstname", help="Photographer's first name")
     parser.add_argument("lastname", help="Photographer's last name")
     parser.add_argument(
@@ -59,7 +60,8 @@ def get_exif_datetime(filepath):
 
 def main():
     args = parse_args()
-    folder = Path(args.folder).resolve()
+    folder = Path(args.year_dir) / "inputs" / "imgs" / args.subfolder
+    folder = folder.resolve()
 
     if not folder.is_dir():
         print(f"Error: {folder} is not a directory")

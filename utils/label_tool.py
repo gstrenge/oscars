@@ -10,12 +10,8 @@ app = Flask(__name__)
 
 parser = argparse.ArgumentParser(description="Photo labeling tool")
 parser.add_argument(
-    "--imgs", default=None,
-    help="Path to images directory (default: ../imgs relative to this script)",
-)
-parser.add_argument(
-    "--labels", default=None,
-    help="Path to labels.json file (default: ../labels.json relative to this script)",
+    "year_dir",
+    help="Path to the year directory (e.g. utils/data/2026)",
 )
 parser.add_argument(
     "--port", type=int, default=5050,
@@ -23,10 +19,10 @@ parser.add_argument(
 )
 args, _ = parser.parse_known_args()
 
-BASE_DIR = Path(__file__).parent.parent
-IMGS_DIR = Path(args.imgs) if args.imgs else BASE_DIR / "imgs"
-THUMBS_DIR = BASE_DIR / ".thumbs"
-LABELS_FILE = Path(args.labels) if args.labels else BASE_DIR / "labels.json"
+YEAR_DIR = Path(args.year_dir)
+IMGS_DIR = YEAR_DIR / "inputs" / "imgs"
+LABELS_FILE = YEAR_DIR / "inputs" / "labels.json"
+THUMBS_DIR = YEAR_DIR / ".thumbs"
 
 
 def load_labels():
@@ -536,7 +532,8 @@ init();
 """
 
 if __name__ == "__main__":
-    print(f"\n  Images dir:  {IMGS_DIR}")
+    print(f"\n  Year dir:    {YEAR_DIR}")
+    print(f"  Images dir:  {IMGS_DIR}")
     print(f"  Labels file: {LABELS_FILE}")
     print(f"  Open http://localhost:{args.port} in your browser\n")
     app.run(port=args.port, debug=False)

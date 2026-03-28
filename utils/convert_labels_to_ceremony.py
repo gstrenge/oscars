@@ -3,12 +3,15 @@ Converts labels.json face labels into a full ceremony JSON file
 used by src/index.jsx.
 
 Combines multiple input sources:
-  - labels.json: face labels from the labeling tool
-  - characters_YEAR.json: character/movie/director metadata
-  - predictions.json: output from convert_predictions.py (optional)
-  - awards.json: ceremony awards with winners (optional)
+  - inputs/labels.json: face labels from the labeling tool
+  - inputs/characters.json: character/movie/director metadata
+  - inputs/predictions.json: output from convert_predictions.py (optional)
+  - inputs/awards.json: ceremony awards with winners (optional)
 
-Output: ceremony JSON with attendees, movies, predictions, and awards.
+Output: outputs/ceremony.json with attendees, movies, predictions, and awards.
+
+Usage:
+    python utils/convert_labels_to_ceremony.py utils/data/2026
 """
 
 import argparse
@@ -40,28 +43,22 @@ def label_key_to_webp_path(key: str) -> str:
 def main():
     parser = argparse.ArgumentParser(description="Convert face labels to ceremony JSON.")
     parser.add_argument(
-        "--labels", default="labels.json",
-        help="Path to labels.json (default: labels.json)",
-    )
-    parser.add_argument(
-        "--characters",
-        help="Path to characters_YEAR.json (default: auto-detected as characters_<year>.json)",
-    )
-    parser.add_argument(
-        "--predictions",
-        help="Path to predictions.json (output from convert_predictions.py)",
-    )
-    parser.add_argument(
-        "--awards",
-        help="Path to awards JSON file",
-    )
-    parser.add_argument(
-        "--output", default="ceremony_attendees.json",
-        help="Path to write output JSON (default: ceremony_attendees.json)",
+        "year_dir",
+        help="Path to the year directory (e.g. utils/data/2026)",
     )
     args = parser.parse_args()
 
-    with open(args.labels, encoding="utf-8") as f:
+    year_dir = args.year_dir.rstrip("/\\")
+    inputs_dir = os.path.join(year_dir, "inputs")
+    outputs_dir = os.path.join(year_dir, "outputs")
+
+    labels_file = os.path.join(inputs_dir, "labels.json")
+    characters_file = os.path.join(inputs_dir, "characters.json")
+    predictions_file = os.path.join(inputs_dir, "predictions.json")
+    awards_file = os.path.join(inputs_dir, "awards.json")
+    output_file = os.path.join(outputs_dir, "ceremony.json")
+
+    with open(labels_file, encoding="utf-8") as f:
         data = json.load(f)
 
     people: list[str] = data["people"]
@@ -70,16 +67,15 @@ def main():
     year = infer_year(labels)
 
     # Load character/movie metadata if available
-    chars_file = args.characters or f"characters_{year}.json"
     char_meta: dict[str, dict] = {}  # name -> {character, movie, director}
     movie_directors: dict[str, str] = {}  # movie title -> director
-    if os.path.exists(chars_file):
-        with open(chars_file, encoding="utf-8") as f:
+    if os.path.exists(characters_file):
+        with open(characters_file, encoding="utf-8") as f:
             chars_data = json.load(f)
         for entry in chars_data["characters"]:
             char_meta[entry["name"]] = {"character": entry["character"], "movie": entry["movie"]}
             movie_directors[entry["movie"]] = entry.get("director", "TBD")
-        print(f"Loaded character metadata from {chars_file}")
+        print(f"Loaded character metadata from {characters_file}")
 
     # Merge people lists: labels.json people + anyone only in characters file
     all_people = list(people)
@@ -124,18 +120,18 @@ def main():
 
     # Load predictions if provided
     predictions = None
-    if args.predictions and os.path.exists(args.predictions):
-        with open(args.predictions, encoding="utf-8") as f:
+    if os.path.exists(predictions_file):
+        with open(predictions_file, encoding="utf-8") as f:
             predictions = json.load(f)
-        print(f"Loaded predictions from {args.predictions} ({len(predictions['picks'])} participants)")
+        print(f"Loaded predictions from {predictions_file} ({len(predictions['picks'])} participants)")
 
     # Load awards if provided
     awards = None
-    if args.awards and os.path.exists(args.awards):
-        with open(args.awards, encoding="utf-8") as f:
+    if os.path.exists(awards_file):
+        with open(awards_file, encoding="utf-8") as f:
             awards_data = json.load(f)
         awards = awards_data.get("awards", [])
-        print(f"Loaded awards from {args.awards} ({len(awards)} awards)")
+        print(f"Loaded awards from {awards_file} ({len(awards)} awards)")
 
     output = {
         "year": year,
@@ -147,7 +143,8 @@ def main():
     if predictions is not None:
         output["predictions"] = predictions
 
-    with open(args.output, "w", encoding="utf-8") as f:
+    os.makedirs(outputs_dir, exist_ok=True)
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
     parts = [f"{len(attendees)} attendees", f"{len(movies)} movies"]
@@ -155,7 +152,7 @@ def main():
         parts.append(f"{len(awards)} awards")
     if predictions is not None:
         parts.append(f"{len(predictions['picks'])} predictions")
-    print(f"\nWritten {args.output}  (year={year}, {', '.join(parts)})")
+    print(f"\nWritten {output_file}  (year={year}, {', '.join(parts)})")
 
     for a in attendees:
         char_str = f"as {a['character']}" if a["character"] else "(no character)"

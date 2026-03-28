@@ -8,13 +8,13 @@ correct answers. Ties are separated with a pipe: "Winner A|Winner B".
 Columns "Timestamp" and "Email Address" are ignored automatically.
 
 Usage:
-    python utils/convert_predictions.py --csv utils/data/2026/inputs/predictions.csv
-    python utils/convert_predictions.py --csv predictions.csv --output predictions.json
+    python utils/convert_predictions.py utils/data/2026
 """
 
 import argparse
 import csv
 import json
+import os
 import sys
 
 IGNORE_COLUMNS = {"Timestamp", "Email Address", "Name"}
@@ -25,12 +25,8 @@ def parse_args():
         description="Convert predictions CSV to ceremony JSON predictions block."
     )
     parser.add_argument(
-        "--csv", required=True,
-        help="Path to predictions CSV file",
-    )
-    parser.add_argument(
-        "--output", default="predictions.json",
-        help="Path to write output JSON (default: predictions.json)",
+        "year_dir",
+        help="Path to the year directory (e.g. utils/data/2026)",
     )
     return parser.parse_args()
 
@@ -38,7 +34,12 @@ def parse_args():
 def main():
     args = parse_args()
 
-    with open(args.csv, encoding="utf-8") as f:
+    year_dir = args.year_dir.rstrip("/\\")
+    inputs_dir = os.path.join(year_dir, "inputs")
+    csv_file = os.path.join(inputs_dir, "predictions.csv")
+    output_file = os.path.join(inputs_dir, "predictions.json")
+
+    with open(csv_file, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames
         rows = list(reader)
@@ -99,10 +100,10 @@ def main():
         "picks": picks,
     }
 
-    with open(args.output, "w", encoding="utf-8") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"Written {args.output}")
+    print(f"Written {output_file}")
     print(f"  {len(categories)} categories, {len(picks)} participants\n")
     print(f"  {'Name':25s}  Score  (/{len(categories)})")
     print(f"  {'-' * 25}  {'-' * 5}")

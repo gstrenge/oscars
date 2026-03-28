@@ -3,17 +3,17 @@ Utility to apply a time offset to photo filenames that follow the format:
     YYYYMMDD_HHMMSS_Firstname_Lastname[_N].ext
 
 Usage:
-    python fix_timestamps.py <folder> <offset_seconds> [--dry-run]
+    python utils/fix_timestamps.py <year_dir> <subfolder> <offset_seconds> [--dry-run]
 
 Examples:
-    # Subtract 30 minutes 18 seconds from all photos in a folder
-    python fix_timestamps.py imgs/timestamp_Kyle_Wheeler -1818
+    # Subtract 30 minutes 18 seconds
+    python utils/fix_timestamps.py utils/data/2026 timestamp_Kyle_Wheeler -1818
 
-    # Add 5 minutes to all photos in a folder
-    python fix_timestamps.py imgs/timestamp_Kyle_Wheeler 300
+    # Add 5 minutes
+    python utils/fix_timestamps.py utils/data/2026 timestamp_Kyle_Wheeler 300
 
     # Preview changes without renaming
-    python fix_timestamps.py imgs/timestamp_Kyle_Wheeler -1818 --dry-run
+    python utils/fix_timestamps.py utils/data/2026 timestamp_Kyle_Wheeler -1818 --dry-run
 """
 
 import argparse
@@ -32,7 +32,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Apply a time offset to timestamped photo filenames."
     )
-    parser.add_argument("folder", help="Path to the folder of photos to rename")
+    parser.add_argument("year_dir", help="Path to the year directory (e.g. utils/data/2026)")
+    parser.add_argument("subfolder", help="Photographer subfolder name within inputs/imgs/")
     parser.add_argument(
         "offset_seconds",
         type=int,
@@ -61,7 +62,8 @@ def compute_new_name(filename, offset):
 
 def main():
     args = parse_args()
-    folder = Path(args.folder).resolve()
+    folder = Path(args.year_dir) / "inputs" / "imgs" / args.subfolder
+    folder = folder.resolve()
 
     if not folder.is_dir():
         print(f"Error: {folder} is not a directory")
