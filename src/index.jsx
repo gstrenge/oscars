@@ -413,6 +413,15 @@ function PhotoGallery({ images, year }) {
 
   // Main filter: person, then secondary: character or movie
   const [filterMode, setFilterMode] = useState("person"); // person | character | movie
+
+  // Reset filters when switching years
+  useEffect(() => {
+    setFilter("all");
+    setFilterMode("person");
+    setSelectMode(false);
+    setSelected(new Set());
+  }, [year]);
+
   const primaryFilters = filterMode === "person" ? personFilters : filterMode === "character" ? characterFilters : movieFilterOptions;
 
   const filteredImages = useMemo(() => {
