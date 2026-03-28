@@ -23,7 +23,13 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from PIL import Image
-from PIL.ExifTags import TAGS
+from PIL.ExifTags import TAGS, IFD
+
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
 
 PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".heic"}
 
@@ -47,14 +53,30 @@ def parse_args():
 def get_exif_datetime(filepath):
     try:
         img = Image.open(filepath)
-        exif = img._getexif()
+
+        # Try legacy _getexif() first (works for JPEG/TIFF)
+        try:
+            exif = img._getexif()
+            if exif:
+                for tag_id, value in exif.items():
+                    tag = TAGS.get(tag_id, tag_id)
+                    if tag == "DateTimeOriginal":
+                        img.close()
+                        return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+        except AttributeError:
+            pass
+
+        # Fall back to getexif() + IFD.Exif (works for HEIC and newer Pillow)
+        exif = img.getexif()
+        if exif:
+            ifd = exif.get_ifd(IFD.Exif)
+            for tag_id, value in ifd.items():
+                tag = TAGS.get(tag_id, tag_id)
+                if tag == "DateTimeOriginal":
+                    img.close()
+                    return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+
         img.close()
-        if not exif:
-            return None
-        for tag_id, value in exif.items():
-            tag = TAGS.get(tag_id, tag_id)
-            if tag == "DateTimeOriginal":
-                return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
     except Exception:
         return None
     return None

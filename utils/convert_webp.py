@@ -20,6 +20,12 @@ import time
 from pathlib import Path
 from PIL import Image, ImageOps
 
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
+
 PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".heic"}
 
 

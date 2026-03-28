@@ -26,9 +26,13 @@ utils/data/YEAR/
 ### Prerequisites
 
 ```bash
-pip install pillow flask
+pip install pillow pillow-heif flask
 npm install   # first time only
 ```
+
+- **Pillow** — image processing (EXIF reading, resizing, WebP conversion)
+- **pillow-heif** — adds HEIC/HEIF support to Pillow (Apple photos)
+- **Flask** — serves the labeling web UI
 
 ---
 
