@@ -377,6 +377,21 @@ function GalleryImage({ filename, year, people, index, selected, onSelect, onCli
   );
 }
 
+// Build a deduplicated image list from ceremony data, aggregating all people per photo
+function buildImageIndex(year) {
+  const ceremony = CEREMONY_DATA[year];
+  const map = new Map();
+  ceremony.attendees.forEach((a) => {
+    a.images.forEach((img) => {
+      if (!map.has(img)) {
+        map.set(img, { filename: img, people: [], year });
+      }
+      map.get(img).people.push({ name: a.name, slug: a.slug, character: a.character, movie: a.movie });
+    });
+  });
+  return map;
+}
+
 function PhotoGallery({ images, year }) {
   const [filter, setFilter] = useState("all");
   const [secondaryFilter, setSecondaryFilter] = useState("all");
@@ -386,18 +401,7 @@ function PhotoGallery({ images, year }) {
   const ceremony = CEREMONY_DATA[year];
 
   // Build flat image list with metadata, deduplicating by filename
-  const allImages = useMemo(() => {
-    const map = new Map();
-    ceremony.attendees.forEach((a) => {
-      a.images.forEach((img) => {
-        if (!map.has(img)) {
-          map.set(img, { filename: img, people: [], year });
-        }
-        map.get(img).people.push({ name: a.name, slug: a.slug, character: a.character, movie: a.movie });
-      });
-    });
-    return [...map.values()];
-  }, [year]);
+  const allImages = useMemo(() => [...buildImageIndex(year).values()], [year]);
 
   // Filter options
   const personFilters = [{ value: "all", label: "All" }, ...ceremony.attendees.map((a) => ({ value: a.slug, label: a.name }))];
@@ -1266,12 +1270,13 @@ function PersonPage({ slug, initialYear }) {
   };
   const yearData = person.years[activeYear];
 
-  // Build images for gallery
-  const allImages = yearData.images.map((img) => ({
-    filename: img,
-    people: [{ name: person.name, slug: person.slug, character: yearData.character, movie: yearData.movie }],
-    year: Number(activeYear),
-  }));
+  // Build images for gallery, with full people data from ceremony index
+  const allImages = useMemo(() => {
+    const index = buildImageIndex(Number(activeYear));
+    return yearData.images
+      .filter((img) => index.has(img))
+      .map((img) => index.get(img));
+  }, [activeYear]);
 
   const [lightbox, setLightbox] = useState(null);
   const lightboxIndex = lightbox !== null ? allImages.findIndex((i) => i.filename === lightbox) : -1;
